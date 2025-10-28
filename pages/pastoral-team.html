@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>牧養決議 - 教會轉組管理系統</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 側邊欄 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>轉組管理系統</h1>
+        <p>Exchange Member GCC</p>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">主要功能</div>
+          <a href="../index.html" class="nav-item">
+            <span class="nav-item-icon">📊</span>
+            <span class="nav-item-text">總覽看板</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">角色操作</div>
+          <a href="applicant.html" class="nav-item">
+            <span class="nav-item-icon">📝</span>
+            <span class="nav-item-text">申請轉組</span>
+          </a>
+          <a href="district-pastor.html" class="nav-item">
+            <span class="nav-item-icon">✍️</span>
+            <span class="nav-item-text">區牧簽核</span>
+          </a>
+          <a href="leader.html" class="nav-item">
+            <span class="nav-item-icon">👥</span>
+            <span class="nav-item-text">小組長追蹤</span>
+          </a>
+          <a href="pastoral-team.html" class="nav-item active">
+            <span class="nav-item-icon">⚖️</span>
+            <span class="nav-item-text">牧養決議</span>
+          </a>
+          <a href="admin.html" class="nav-item">
+            <span class="nav-item-icon">💼</span>
+            <span class="nav-item-text">資處登錄</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+    
+    <!-- 主內容 -->
+    <main class="main-content">
+      <div class="content-header">
+        <h2>牧養團隊決議</h2>
+        <p>審核評估並作出最終決定</p>
+      </div>
+      
+      <div class="content-body">
+        <!-- 待決議案件 -->
+        <div class="card">
+          <div class="card-header">待決議案件</div>
+          <div id="pendingDecisionList"></div>
+        </div>
+        
+        <!-- 已決議案件 -->
+        <div class="card">
+          <div class="card-header">已決議案件</div>
+          <div id="completedDecisionList"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    function renderPendingDecision() {
+      const container = document.getElementById('pendingDecisionList');
+      
+      // 篩選區牧統整完成、待決議的案件
+      const pending = mockData.filter(item => {
+        return item.status === '決議中' && !item.decision.result;
+      });
+      
+      if (pending.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="padding: 20px; text-align: center;">目前沒有待決議案件</p>';
+        return;
+      }
+      
+      container.innerHTML = pending.map(item => `
+        <div style="padding: 20px; border-bottom: 1px solid var(--border-color);">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 style="margin: 0;">${item.name}</h4>
+          </div>
+          
+          <div class="info-grid" style="margin: 16px 0;">
+            <div class="info-item">
+              <div class="info-label">轉組方向</div>
+              <div class="info-value">${item.originalGroup} → ${item.newGroup}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">轉組原因</div>
+              <div class="info-value">${item.reason}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">原小組長評分</div>
+              <div class="info-value">${renderStars(item.evaluation.originalLeaderScore)}</div>
+              <div class="info-value text-muted" style="font-size: 14px; margin-top: 4px;">
+                ${item.evaluation.originalLeaderComment}
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">新小組長評分</div>
+              <div class="info-value">${renderStars(item.evaluation.newLeaderScore)}</div>
+              <div class="info-value text-muted" style="font-size: 14px; margin-top: 4px;">
+                ${item.evaluation.newLeaderComment}
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">原區牧統整</div>
+              <div class="info-value">${item.evaluation.originalPastorSummary || '-'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">新區牧統整</div>
+              <div class="info-value">${item.evaluation.newPastorSummary || '-'}</div>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button class="btn btn-primary" onclick="makeDecision(${item.id}, '同意')" style="flex: 1;">
+              ✅ 同意轉組
+            </button>
+            <button class="btn btn-outline" onclick="makeDecision(${item.id}, '暫緩')" style="flex: 1; border-color: var(--warning-color); color: var(--warning-color);">
+              ⏸️ 暫緩處理
+            </button>
+            <button class="btn btn-outline" onclick="makeDecision(${item.id}, '不同意')" style="flex: 1; border-color: var(--danger-color); color: var(--danger-color);">
+              ❌ 不同意
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function makeDecision(caseId, result) {
+      const comment = prompt(`決議「${result}」，請輸入說明：`);
+      if (!comment) return;
+      
+      const today = new Date().toISOString().split('T')[0];
+      
+      updateCase(caseId, {
+        decision: {
+          result: result,
+          comment: comment,
+          date: today
+        },
+        status: result === '同意' ? '資處更新中' : '決議中'
+      });
+      
+      showNotification(`決議「${result}」已完成！`, 'success');
+      refreshPage();
+    }
+    
+    function renderCompletedDecision() {
+      const container = document.getElementById('completedDecisionList');
+      
+      const completed = mockData.filter(item => item.decision.result);
+      
+      if (completed.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="padding: 20px; text-align: center;">尚無已決議案件</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>申請人</th>
+              <th>小組</th>
+              <th>決議結果</th>
+              <th>決議日期</th>
+              <th>狀態</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${completed.map(item => {
+              const statusDisplay = getStatusDisplay(item.status);
+              const resultColor = item.decision.result === '同意' ? 'var(--success-color)' : 
+                                 item.decision.result === '暫緩' ? 'var(--warning-color)' : 
+                                 'var(--danger-color)';
+              
+              return `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.originalGroup} → ${item.newGroup}</td>
+                  <td style="color: ${resultColor}; font-weight: 600;">${item.decision.result}</td>
+                  <td>${formatDate(item.decision.date)}</td>
+                  <td>
+                    <span class="case-status" style="background-color: ${statusDisplay.bgColor}; color: ${statusDisplay.color};">
+                      ${statusDisplay.icon} ${statusDisplay.text}
+                    </span>
+                  </td>
+                  <td>
+                    <a href="../index.html" class="btn btn-outline">查看詳情</a>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    function refreshPage() {
+      renderPendingDecision();
+      renderCompletedDecision();
+    }
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', refreshPage);
+  </script>
+</body>
+</html>

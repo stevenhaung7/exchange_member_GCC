@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>資處登錄 - 教會轉組管理系統</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 側邊欄 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>轉組管理系統</h1>
+        <p>Exchange Member GCC</p>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">主要功能</div>
+          <a href="../index.html" class="nav-item">
+            <span class="nav-item-icon">📊</span>
+            <span class="nav-item-text">總覽看板</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">角色操作</div>
+          <a href="applicant.html" class="nav-item">
+            <span class="nav-item-icon">📝</span>
+            <span class="nav-item-text">申請轉組</span>
+          </a>
+          <a href="district-pastor.html" class="nav-item">
+            <span class="nav-item-icon">✍️</span>
+            <span class="nav-item-text">區牧簽核</span>
+          </a>
+          <a href="leader.html" class="nav-item">
+            <span class="nav-item-icon">👥</span>
+            <span class="nav-item-text">小組長追蹤</span>
+          </a>
+          <a href="pastoral-team.html" class="nav-item">
+            <span class="nav-item-icon">⚖️</span>
+            <span class="nav-item-text">牧養決議</span>
+          </a>
+          <a href="admin.html" class="nav-item active">
+            <span class="nav-item-icon">💼</span>
+            <span class="nav-item-text">資處登錄</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+    
+    <!-- 主內容 -->
+    <main class="main-content">
+      <div class="content-header">
+        <h2>資處系統登錄</h2>
+        <p>確認系統資料更新並完成結案</p>
+      </div>
+      
+      <div class="content-body">
+        <!-- 待登錄案件 -->
+        <div class="card">
+          <div class="card-header">待登錄案件（已同意轉組）</div>
+          <div id="pendingAdminList"></div>
+        </div>
+        
+        <!-- 已完成案件 -->
+        <div class="card">
+          <div class="card-header">已完成登錄</div>
+          <div id="completedAdminList"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    function renderPendingAdmin() {
+      const container = document.getElementById('pendingAdminList');
+      
+      // 篩選決議同意但尚未完成資處登錄的案件
+      const pending = mockData.filter(item => {
+        return item.status === '資處更新中' && !item.adminCompleted;
+      });
+      
+      if (pending.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="padding: 20px; text-align: center;">目前沒有待登錄案件</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>申請人</th>
+              <th>原小組</th>
+              <th>新小組</th>
+              <th>決議日期</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pending.map(item => `
+              <tr>
+                <td>${item.name}</td>
+                <td>${item.originalGroup}</td>
+                <td>${item.newGroup}</td>
+                <td>${formatDate(item.decision.date)}</td>
+                <td>
+                  <button class="btn btn-primary" onclick="completeAdmin(${item.id})">
+                    ✅ 確認登錄完成
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    function completeAdmin(caseId) {
+      if (!confirm('確認系統資料已更新完成？')) return;
+      
+      const today = new Date().toISOString().split('T')[0];
+      
+      updateCase(caseId, {
+        adminCompleted: true,
+        adminCompletedDate: today,
+        status: '已轉組'
+      });
+      
+      showNotification('登錄完成，案件已結案！', 'success');
+      refreshPage();
+    }
+    
+    function renderCompletedAdmin() {
+      const container = document.getElementById('completedAdminList');
+      
+      const completed = mockData.filter(item => item.status === '已轉組');
+      
+      if (completed.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="padding: 20px; text-align: center;">尚無已完成案件</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>申請人</th>
+              <th>原小組</th>
+              <th>新小組</th>
+              <th>申請日期</th>
+              <th>完成日期</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${completed.map(item => `
+              <tr>
+                <td>${item.name}</td>
+                <td>${item.originalGroup}</td>
+                <td>${item.newGroup}</td>
+                <td>${formatDate(item.applicationDate)}</td>
+                <td>${formatDate(item.adminCompletedDate)}</td>
+                <td>
+                  <a href="../index.html" class="btn btn-outline">查看詳情</a>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    function refreshPage() {
+      renderPendingAdmin();
+      renderCompletedAdmin();
+    }
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', refreshPage);
+  </script>
+</body>
+</html>

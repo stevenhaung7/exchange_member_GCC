@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>區牧簽核 - 教會轉組管理系統</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 側邊欄 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>轉組管理系統</h1>
+        <p>Exchange Member GCC</p>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">主要功能</div>
+          <a href="../index.html" class="nav-item">
+            <span class="nav-item-icon">📊</span>
+            <span class="nav-item-text">總覽看板</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">角色操作</div>
+          <a href="applicant.html" class="nav-item">
+            <span class="nav-item-icon">📝</span>
+            <span class="nav-item-text">申請轉組</span>
+          </a>
+          <a href="district-pastor.html" class="nav-item active">
+            <span class="nav-item-icon">✍️</span>
+            <span class="nav-item-text">區牧簽核</span>
+          </a>
+          <a href="leader.html" class="nav-item">
+            <span class="nav-item-icon">👥</span>
+            <span class="nav-item-text">小組長追蹤</span>
+          </a>
+          <a href="pastoral-team.html" class="nav-item">
+            <span class="nav-item-icon">⚖️</span>
+            <span class="nav-item-text">牧養決議</span>
+          </a>
+          <a href="admin.html" class="nav-item">
+            <span class="nav-item-icon">💼</span>
+            <span class="nav-item-text">資處登錄</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+    
+    <!-- 主內容 -->
+    <main class="main-content">
+      <div class="content-header">
+        <h2>區牧簽核與統整</h2>
+        <p>審核轉組申請並填寫統整建議</p>
+      </div>
+      
+      <div class="content-body">
+        <!-- 待簽核案件 -->
+        <div class="card">
+          <div class="card-header">待簽核案件</div>
+          <div id="pendingApprovalList"></div>
+        </div>
+        
+        <!-- 待統整案件（7週完成後） -->
+        <div class="card">
+          <div class="card-header">待統整案件（7週追蹤完成）</div>
+          <div id="pendingSummaryList"></div>
+        </div>
+        
+        <!-- 已處理案件 -->
+        <div class="card">
+          <div class="card-header">已處理案件</div>
+          <div id="completedList"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    // 模擬當前區牧身份
+    const currentPastor = '李區牧'; // 可切換為 '陳區牧' 或 '王區牧'
+    
+    // 渲染待簽核案件
+    function renderPendingApproval() {
+      const container = document.getElementById('pendingApprovalList');
+      
+      // 篩選需要當前區牧簽核的案件
+      const pending = mockData.filter(item => {
+        const isOriginalPastor = item.originalPastor === currentPastor;
+        const isNewPastor = item.newPastor === currentPastor;
+        const needApproval = (isOriginalPastor && !item.originalPastorApproved) || 
+                            (isNewPastor && !item.newPastorApproved);
+        return needApproval;
+      });
+      
+      if (pending.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="padding: 20px; text-align: center;">目前沒有待簽核案件</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>申請人</th>
+              <th>原小組</th>
+              <th>新小組</th>
+              <th>角色</th>
+              <th>申請日期</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pending.map(item => {
+              const role = item.originalPastor === currentPastor ? '原區牧' : '新區牧';
+              return `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.originalGroup}</td>
+                  <td>${item.newGroup}</td>
+                  <td>${role}</td>
+                  <td>${formatDate(item.applicationDate)}</td>
+                  <td>
+                    <button class="btn btn-primary" onclick="approveCase(${item.id}, '${role}')">
+                      ✅ 簽核同意
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    // 簽核案件
+    function approveCase(caseId, role) {
+      const caseData = getCaseById(caseId);
+      const today = new Date().toISOString().split('T')[0];
+      
+      if (role === '原區牧') {
+        updateCase(caseId, {
+          originalPastorApproved: true,
+          originalPastorDate: today,
+          status: caseData.newPastorApproved ? '交叉關心中' : '簽核中'
+        });
+      } else {
+        updateCase(caseId, {
+          newPastorApproved: true,
+          newPastorDate: today,
+          status: caseData.originalPastorApproved ? '交叉關心中' : '簽核中'
+        });
+      }
+      
+      // 如果雙方都簽核，設定追蹤開始日期
+      if (caseData.originalPastorApproved && caseData.newPastorApproved) {
+        updateCase(caseId, {
+          trackingStartDate: today,
+          status: '交叉關心中'
+        });
+      }
+      
+      showNotification('簽核完成！', 'success');
+      refreshPage();
+    }
+    
+    // 渲染待統整案件
+    function renderPendingSummary() {
+      const container = document.getElementById('pendingSummaryList');
+      
+      // 篩選7週完成且需要當前區牧統整的案件
+      const pendingSummary = mockData.filter(item => {
+        const isOriginalPastor = item.originalPastor === currentPastor;
+        const isNewPastor = item.newPastor === currentPastor;
+        const tracking7WeeksComplete = canEvaluate(item);
+        const hasLeaderEvaluation = item.evaluation.originalLeaderScore && item.evaluation.newLeaderScore;
+        const needSummary = (isOriginalPastor && !item.evaluation.originalPastorSummary) || 
+                           (isNewPastor && !item.evaluation.newPastorSummary);
+        
+        return tracking7WeeksComplete && hasLeaderEvaluation && needSummary;
+      });
+      
+      if (pendingSummary.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="padding: 20px; text-align: center;">目前沒有待統整案件</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>申請人</th>
+              <th>小組</th>
+              <th>原組長評分</th>
+              <th>新組長評分</th>
+              <th>角色</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pendingSummary.map(item => {
+              const role = item.originalPastor === currentPastor ? '原區牧' : '新區牧';
+              return `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.originalGroup} → ${item.newGroup}</td>
+                  <td>${renderStars(item.evaluation.originalLeaderScore)}</td>
+                  <td>${renderStars(item.evaluation.newLeaderScore)}</td>
+                  <td>${role}</td>
+                  <td>
+                    <button class="btn btn-primary" onclick="openSummaryForm(${item.id}, '${role}')">
+                      📝 填寫統整
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    // 填寫統整
+    function openSummaryForm(caseId, role) {
+      const summary = prompt('請輸入統整建議：');
+      if (!summary) return;
+      
+      const caseData = getCaseById(caseId);
+      const updates = { evaluation: { ...caseData.evaluation } };
+      
+      if (role === '原區牧') {
+        updates.evaluation.originalPastorSummary = summary;
+      } else {
+        updates.evaluation.newPastorSummary = summary;
+      }
+      
+      // 檢查是否雙方區牧都已統整
+      if (updates.evaluation.originalPastorSummary && updates.evaluation.newPastorSummary) {
+        updates.status = '決議中';
+      } else {
+        updates.status = '評估中';
+      }
+      
+      updateCase(caseId, updates);
+      showNotification('統整已儲存！', 'success');
+      refreshPage();
+    }
+    
+    // 渲染已處理案件
+    function renderCompleted() {
+      const container = document.getElementById('completedList');
+      
+      // 篩選當前區牧已處理的案件
+      const completed = mockData.filter(item => {
+        const isOriginalPastor = item.originalPastor === currentPastor;
+        const isNewPastor = item.newPastor === currentPastor;
+        const hasApproved = (isOriginalPastor && item.originalPastorApproved) || 
+                           (isNewPastor && item.newPastorApproved);
+        const hasSummary = (isOriginalPastor && item.evaluation.originalPastorSummary) || 
+                          (isNewPastor && item.evaluation.newPastorSummary);
+        
+        return hasApproved && (hasSummary || item.status === '已轉組');
+      });
+      
+      if (completed.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="padding: 20px; text-align: center;">尚無已處理案件</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>申請人</th>
+              <th>小組</th>
+              <th>狀態</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${completed.map(item => {
+              const statusDisplay = getStatusDisplay(item.status);
+              return `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.originalGroup} → ${item.newGroup}</td>
+                  <td>
+                    <span class="case-status" style="background-color: ${statusDisplay.bgColor}; color: ${statusDisplay.color};">
+                      ${statusDisplay.icon} ${statusDisplay.text}
+                    </span>
+                  </td>
+                  <td>
+                    <a href="../index.html" class="btn btn-outline">查看詳情</a>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    function refreshPage() {
+      renderPendingApproval();
+      renderPendingSummary();
+      renderCompleted();
+    }
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', refreshPage);
+  </script>
+</body>
+</html>
