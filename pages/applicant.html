@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>申請轉組 - 教會轉組管理系統</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 側邊欄 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>轉組管理系統</h1>
+        <p>Exchange Member GCC</p>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">主要功能</div>
+          <a href="../index.html" class="nav-item">
+            <span class="nav-item-icon">📊</span>
+            <span class="nav-item-text">總覽看板</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">角色操作</div>
+          <a href="applicant.html" class="nav-item active">
+            <span class="nav-item-icon">📝</span>
+            <span class="nav-item-text">申請轉組</span>
+          </a>
+          <a href="district-pastor.html" class="nav-item">
+            <span class="nav-item-icon">✍️</span>
+            <span class="nav-item-text">區牧簽核</span>
+          </a>
+          <a href="leader.html" class="nav-item">
+            <span class="nav-item-icon">👥</span>
+            <span class="nav-item-text">小組長追蹤</span>
+          </a>
+          <a href="pastoral-team.html" class="nav-item">
+            <span class="nav-item-icon">⚖️</span>
+            <span class="nav-item-text">牧養決議</span>
+          </a>
+          <a href="admin.html" class="nav-item">
+            <span class="nav-item-icon">💼</span>
+            <span class="nav-item-text">資處登錄</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+    
+    <!-- 主內容 -->
+    <main class="main-content">
+      <div class="content-header">
+        <h2>申請轉組</h2>
+        <p>填寫轉組申請表單</p>
+      </div>
+      
+      <div class="content-body">
+        <div class="card">
+          <div class="card-header">轉組申請表單</div>
+          <div class="card-body">
+            <form id="applicationForm">
+              <div class="form-group">
+                <label class="form-label">姓名 *</label>
+                <input type="text" class="form-input" name="name" required placeholder="請輸入您的姓名">
+              </div>
+              
+              <div class="info-grid">
+                <div class="form-group">
+                  <label class="form-label">原小組 *</label>
+                  <select class="form-select" name="originalGroup" required>
+                    <option value="">請選擇</option>
+                    <option value="青年A組">青年A組</option>
+                    <option value="青年B組">青年B組</option>
+                    <option value="青年C組">青年C組</option>
+                    <option value="社青A組">社青A組</option>
+                    <option value="社青B組">社青B組</option>
+                    <option value="社青C組">社青C組</option>
+                    <option value="家庭A組">家庭A組</option>
+                    <option value="家庭B組">家庭B組</option>
+                    <option value="家庭C組">家庭C組</option>
+                    <option value="家庭D組">家庭D組</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">新小組 *</label>
+                  <select class="form-select" name="newGroup" required>
+                    <option value="">請選擇</option>
+                    <option value="青年A組">青年A組</option>
+                    <option value="青年B組">青年B組</option>
+                    <option value="青年C組">青年C組</option>
+                    <option value="社青A組">社青A組</option>
+                    <option value="社青B組">社青B組</option>
+                    <option value="社青C組">社青C組</option>
+                    <option value="家庭A組">家庭A組</option>
+                    <option value="家庭B組">家庭B組</option>
+                    <option value="家庭C組">家庭C組</option>
+                    <option value="家庭D組">家庭D組</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">轉組原因 *</label>
+                <textarea class="form-textarea" name="reason" required placeholder="請詳細說明轉組原因，例如：工作地點調整、搬家、家庭因素等"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                  📨 送出申請
+                </button>
+              </div>
+              
+              <div class="text-muted text-center" style="font-size: 14px;">
+                <p>送出後將通知原區牧與新區牧進行簽核</p>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    document.getElementById('applicationForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const data = {
+        name: formData.get('name'),
+        originalGroup: formData.get('originalGroup'),
+        newGroup: formData.get('newGroup'),
+        reason: formData.get('reason')
+      };
+      
+      // 驗證不能選擇相同小組
+      if (data.originalGroup === data.newGroup) {
+        alert('原小組與新小組不能相同！');
+        return;
+      }
+      
+      // 模擬送出申請（實際應該送到後端）
+      console.log('申請資料：', data);
+      
+      // 顯示成功訊息
+      showNotification('申請已送出！將通知相關區牧進行簽核。', 'success');
+      
+      // 2秒後跳轉回總覽
+      setTimeout(() => {
+        window.location.href = '../index.html';
+      }, 2000);
+    });
+  </script>
+</body>
+</html>

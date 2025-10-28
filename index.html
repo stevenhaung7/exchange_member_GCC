@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教會轉組管理系統 - 總覽看板</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 側邊欄 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>轉組管理系統</h1>
+        <p>Exchange Member GCC</p>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">主要功能</div>
+          <a href="index.html" class="nav-item active">
+            <span class="nav-item-icon">📊</span>
+            <span class="nav-item-text">總覽看板</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">角色操作</div>
+          <a href="pages/applicant.html" class="nav-item">
+            <span class="nav-item-icon">📝</span>
+            <span class="nav-item-text">申請轉組</span>
+          </a>
+          <a href="pages/district-pastor.html" class="nav-item">
+            <span class="nav-item-icon">✍️</span>
+            <span class="nav-item-text">區牧簽核</span>
+          </a>
+          <a href="pages/leader.html" class="nav-item">
+            <span class="nav-item-icon">👥</span>
+            <span class="nav-item-text">小組長追蹤</span>
+          </a>
+          <a href="pages/pastoral-team.html" class="nav-item">
+            <span class="nav-item-icon">⚖️</span>
+            <span class="nav-item-text">牧養決議</span>
+          </a>
+          <a href="pages/admin.html" class="nav-item">
+            <span class="nav-item-icon">💼</span>
+            <span class="nav-item-text">資處登錄</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+    
+    <!-- 主內容 -->
+    <main class="main-content">
+      <div class="content-header">
+        <h2>總覽看板</h2>
+        <p>檢視所有轉組申請的狀態與進度</p>
+      </div>
+      
+      <div class="content-body">
+        <div class="split-layout">
+          <!-- 左側：案件列表 -->
+          <div class="case-list">
+            <div class="case-list-header">
+              <h3>案件列表</h3>
+              <div class="filter-tabs">
+                <button class="filter-tab active" data-status="">全部</button>
+                <button class="filter-tab" data-status="申請中">申請中</button>
+                <button class="filter-tab" data-status="簽核中">簽核中</button>
+                <button class="filter-tab" data-status="交叉關心中">關心中</button>
+                <button class="filter-tab" data-status="評估中">評估中</button>
+                <button class="filter-tab" data-status="決議中">決議中</button>
+                <button class="filter-tab" data-status="已轉組">已完成</button>
+              </div>
+            </div>
+            
+            <div class="case-list-items" id="caseListItems">
+              <!-- 動態生成案件列表 -->
+            </div>
+          </div>
+          
+          <!-- 右側：案件詳情 -->
+          <div class="case-detail" id="caseDetail">
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <h3>選擇案件查看詳情</h3>
+              <p>請從左側列表中選擇一個案件</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

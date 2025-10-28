@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小組長追蹤 - 教會轉組管理系統</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 側邊欄 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>轉組管理系統</h1>
+        <p>Exchange Member GCC</p>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">主要功能</div>
+          <a href="../index.html" class="nav-item">
+            <span class="nav-item-icon">📊</span>
+            <span class="nav-item-text">總覽看板</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">角色操作</div>
+          <a href="applicant.html" class="nav-item">
+            <span class="nav-item-icon">📝</span>
+            <span class="nav-item-text">申請轉組</span>
+          </a>
+          <a href="district-pastor.html" class="nav-item">
+            <span class="nav-item-icon">✍️</span>
+            <span class="nav-item-text">區牧簽核</span>
+          </a>
+          <a href="leader.html" class="nav-item active">
+            <span class="nav-item-icon">👥</span>
+            <span class="nav-item-text">小組長追蹤</span>
+          </a>
+          <a href="pastoral-team.html" class="nav-item">
+            <span class="nav-item-icon">⚖️</span>
+            <span class="nav-item-text">牧養決議</span>
+          </a>
+          <a href="admin.html" class="nav-item">
+            <span class="nav-item-icon">💼</span>
+            <span class="nav-item-text">資處登錄</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+    
+    <!-- 主內容 -->
+    <main class="main-content">
+      <div class="content-header">
+        <h2>小組長 7 週追蹤</h2>
+        <p>逐週追蹤組員狀況並進行評估</p>
+      </div>
+      
+      <div class="content-body">
+        <!-- 追蹤中案件 -->
+        <div class="card">
+          <div class="card-header">需要追蹤的案件</div>
+          <div id="trackingCasesList"></div>
+        </div>
+        
+        <!-- 待評估案件 -->
+        <div class="card">
+          <div class="card-header">待評估案件（7週完成）</div>
+          <div id="evaluationCasesList"></div>
+        </div>
+        
+        <!-- 已完成案件 -->
+        <div class="card">
+          <div class="card-header">已完成評估</div>
+          <div id="completedCasesList"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    // 模擬當前小組長身份
+    const currentLeader = '張牧師'; // 可切換測試
+    
+    function renderTrackingCases() {
+      const container = document.getElementById('trackingCasesList');
+      const tracking = mockData.filter(item => {
+        const isTracking = item.originalPastorApproved && item.newPastorApproved;
+        const notComplete = !canEvaluate(item);
+        const isMyCase = item.originalLeader === currentLeader || item.newLeader === currentLeader;
+        return isTracking && notComplete && isMyCase;
+      });
+      
+      if (tracking.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="padding: 20px; text-align: center;">目前沒有需要追蹤的案件</p>';
+        return;
+      }
+      
+      container.innerHTML = tracking.map(item => {
+        const role = item.originalLeader === currentLeader ? 'original' : 'new';
+        const roleText = role === 'original' ? '原小組長' : '新小組長';
+        const progress = calculateProgress(item.weeklyTracking);
+        
+        return `
+          <div style="padding: 20px; border-bottom: 1px solid var(--border-color);">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h4 style="margin: 0;">${item.name}</h4>
+              <span class="text-muted">${roleText}</span>
+            </div>
+            <p class="text-muted mb-2">${item.originalGroup} → ${item.newGroup}</p>
+            
+            <div style="margin: 16px 0;">
+              <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: ${progress.percentage}%"></div>
+              </div>
+              <div style="text-align: center; margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
+                ${progress.completed} / 7 週完成
+              </div>
+            </div>
+            
+            <div class="mt-2">
+              <strong>每週打勾：</strong><br>
+              <div style="display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap;">
+                ${[1,2,3,4,5,6,7].map(week => {
+                  const checked = item.weeklyTracking['week' + week][role];
+                  return `
+                    <button 
+                      class="btn ${checked ? 'btn-primary' : 'btn-outline'}" 
+                      style="min-width: 80px;"
+                      onclick="toggleWeek(${item.id}, ${week}, '${role}')"
+                    >
+                      第${week}週 ${checked ? '✓' : ''}
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function renderEvaluationCases() {
+      const container = document.getElementById('evaluationCasesList');
+      const evaluation = mockData.filter(item => {
+        const isComplete = canEvaluate(item);
+        const isMyCase = item.originalLeader === currentLeader || item.newLeader === currentLeader;
+        const needsEval = (item.originalLeader === currentLeader && !item.evaluation.originalLeaderScore) ||
+                         (item.newLeader === currentLeader && !item.evaluation.newLeaderScore);
+        return isComplete && isMyCase && needsEval;
+      });
+      
+      if (evaluation.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="padding: 20px; text-align: center;">目前沒有待評估案件</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>申請人</th>
+              <th>小組</th>
+              <th>角色</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${evaluation.map(item => {
+              const role = item.originalLeader === currentLeader ? 'original' : 'new';
+              const roleText = role === 'original' ? '原小組長' : '新小組長';
+              const group = role === 'original' ? item.originalGroup : item.newGroup;
+              
+              return `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${group}</td>
+                  <td>${roleText}</td>
+                  <td>
+                    <button class="btn btn-primary" onclick="openEvaluationForm(${item.id}, '${role}')">
+                      填寫評估
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    function renderCompletedCases() {
+      const container = document.getElementById('completedCasesList');
+      const completed = mockData.filter(item => {
+        const isMyCase = item.originalLeader === currentLeader || item.newLeader === currentLeader;
+        const hasEval = (item.originalLeader === currentLeader && item.evaluation.originalLeaderScore) ||
+                       (item.newLeader === currentLeader && item.evaluation.newLeaderScore);
+        return isMyCase && hasEval;
+      });
+      
+      if (completed.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="padding: 20px; text-align: center;">尚無已完成評估的案件</p>';
+        return;
+      }
+      
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>申請人</th>
+              <th>評分</th>
+              <th>狀態</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${completed.map(item => {
+              const role = item.originalLeader === currentLeader ? 'original' : 'new';
+              const score = role === 'original' ? item.evaluation.originalLeaderScore : item.evaluation.newLeaderScore;
+              const statusDisplay = getStatusDisplay(item.status);
+              
+              return `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${renderStars(score)}</td>
+                  <td>
+                    <span class="case-status" style="background-color: ${statusDisplay.bgColor}; color: ${statusDisplay.color};">
+                      ${statusDisplay.icon} ${statusDisplay.text}
+                    </span>
+                  </td>
+                  <td>
+                    <a href="../index.html" class="btn btn-outline">查看詳情</a>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    function toggleWeek(caseId, week, role) {
+      const caseData = getCaseById(caseId);
+      const weekKey = 'week' + week;
+      const currentValue = caseData.weeklyTracking[weekKey][role];
+      
+      const updates = {
+        weeklyTracking: { ...caseData.weeklyTracking }
+      };
+      updates.weeklyTracking[weekKey] = {
+        ...updates.weeklyTracking[weekKey],
+        [role]: !currentValue
+      };
+      
+      updateCase(caseId, updates);
+      showNotification('第' + week + '週' + (!currentValue ? '已' : '取消') + '打勾', 'success');
+      refreshPage();
+    }
+    
+    function openEvaluationForm(caseId, role) {
+      const score = prompt('請評分 (1-5分)：');
+      if (!score || score < 1 || score > 5) return;
+      
+      const comment = prompt('請輸入觀察與建議：');
+      if (!comment) return;
+      
+      const caseData = getCaseById(caseId);
+      const updates = { evaluation: { ...caseData.evaluation } };
+      
+      if (role === 'original') {
+        updates.evaluation.originalLeaderScore = parseInt(score);
+        updates.evaluation.originalLeaderComment = comment;
+      } else {
+        updates.evaluation.newLeaderScore = parseInt(score);
+        updates.evaluation.newLeaderComment = comment;
+      }
+      
+      updates.status = '評估中';
+      
+      updateCase(caseId, updates);
+      showNotification('評估已儲存！', 'success');
+      refreshPage();
+    }
+    
+    function refreshPage() {
+      renderTrackingCases();
+      renderEvaluationCases();
+      renderCompletedCases();
+    }
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', refreshPage);
+  </script>
+</body>
+</html>
