@@ -122,7 +122,34 @@ exchange_member_GCC/
 └── README.md               # 專案說明
 ```
 
-## 🚀 安裝與執行
+## 🚀 線上展示
+
+### 🌐 GitHub Pages（推薦）
+
+本系統已部署至 GitHub Pages，可直接線上使用：
+
+**🔗 https://stevenhaung7.github.io/exchange_member_GCC/**
+
+#### 功能頁面連結：
+- 📊 [總覽看板](https://stevenhaung7.github.io/exchange_member_GCC/)
+- 📝 [申請轉組](https://stevenhaung7.github.io/exchange_member_GCC/pages/applicant.html)
+- ✅ [區牧簽核](https://stevenhaung7.github.io/exchange_member_GCC/pages/district-pastor.html)
+- 👥 [小組長追蹤](https://stevenhaung7.github.io/exchange_member_GCC/pages/leader.html)
+- 🤝 [牧養決議](https://stevenhaung7.github.io/exchange_member_GCC/pages/pastoral-team.html)
+- 🖥️ [資處登錄](https://stevenhaung7.github.io/exchange_member_GCC/pages/admin.html)
+
+#### 特點：
+- ✅ 全球 CDN 加速
+- ✅ HTTPS 安全連線
+- ✅ 無需安裝，開啟即用
+- ✅ 支援手機、平板、電腦
+- ✅ 自動部署（推送代碼自動更新）
+
+---
+
+## 💻 本地開發
+
+若需要在本機開發或測試，可使用以下方式：
 
 ### 方法一：使用 Python HTTP Server
 
@@ -153,7 +180,7 @@ http-server -p 8000
 2. 在 `index.html` 上按右鍵
 3. 選擇 **Open with Live Server**
 
-### 存取系統
+### 存取本地系統
 
 開啟瀏覽器，前往：
 ```
@@ -272,20 +299,62 @@ http://localhost:8000
 ### 新增功能
 在 `js/main.js` 或各頁面的 `<script>` 區塊中擴充功能。
 
-## 🐛 已知限制
+## 🐛 系統說明
 
-由於本專案為純前端展示系統：
+### 📌 本系統特性
 
-- ❌ 無真實資料庫（資料重新整理後會還原）
-- ❌ 無多人協作（無法多人同時編輯）
-- ❌ 無真實 Email 通知（僅模擬訊息）
-- ❌ 無使用者登入系統（角色需手動切換）
+本專案為**靜態網頁展示系統**，適用於：
+- ✅ 流程展示與需求確認
+- ✅ 介面設計與使用者體驗測試
+- ✅ 系統原型（Prototype）展示
 
-若需要完整功能，建議：
-- 後端：Node.js + Express + MongoDB
-- 前端：React / Vue.js
-- 認證：OAuth 2.0 / JWT
-- 通知：SendGrid / Mailgun
+### ⚠️ 已知限制
+
+由於為純前端靜態網頁：
+
+- ❌ **資料不持久**：重新整理頁面後，新增/修改的資料會還原為預設模擬資料
+- ❌ **無多人協作**：每個使用者看到的資料是獨立的，無法同步
+- ❌ **無真實通知**：Email/LINE 通知僅為模擬訊息
+- ❌ **無帳號系統**：無使用者登入與權限管理
+
+### 🚀 升級為動態網頁
+
+若需要實際上線使用，建議升級為**動態網頁系統**，包含：
+
+#### 後端技術
+- **伺服器**：Node.js + Express / Python + FastAPI
+- **資料庫**：PostgreSQL / MySQL / MongoDB
+- **認證**：JWT / OAuth 2.0
+- **API**：RESTful API 設計
+
+#### 新增功能
+- ✅ 真實資料庫存儲（資料永久保存）
+- ✅ 多人協作（所有人看到同一份資料）
+- ✅ 帳號登入與權限管理
+- ✅ Email/LINE 自動通知
+- ✅ 資料統計與報表匯出
+- ✅ 檔案上傳功能
+- ✅ 操作記錄與稽核追蹤
+
+#### 部署方案
+- **雲端服務**：AWS / Google Cloud / Azure
+- **費用預估**：約 $10-50 USD/月（視使用量）
+- **開發時間**：約 4-8 週
+
+---
+
+## 🔄 自動部署
+
+本專案使用 **GitHub Actions** 實現自動部署：
+
+- 每次推送代碼到 `main` 分支
+- 自動觸發部署流程
+- 1-2 分鐘後網站自動更新
+
+查看部署狀態：
+```
+https://github.com/stevenhaung7/exchange_member_GCC/actions
+```
 
 ## 📄 授權
 
